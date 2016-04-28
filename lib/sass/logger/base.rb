@@ -5,6 +5,7 @@ class Sass::Logger::Base
 
   attr_accessor :log_level
   attr_accessor :disabled
+  attr_accessor :io
 
   log_level :trace
   log_level :debug
@@ -12,8 +13,9 @@ class Sass::Logger::Base
   log_level :warn
   log_level :error
 
-  def initialize(log_level = :debug)
+  def initialize(log_level = :debug, io = nil)
     self.log_level = log_level
+    self.io = io
   end
 
   def logging_level?(level)
@@ -25,6 +27,11 @@ class Sass::Logger::Base
   end
 
   def _log(level, message)
-    Kernel.warn(message)
+    # rubocop:disable GlobalVars
+    return unless $-W > 0
+    # rubocop:enable GlobalVars
+    # We lazily resolve to $stderr because changing that global to a
+    # StringIO is a common way that people capture our warnings.
+    (io || $stderr).puts(message)
   end
 end
